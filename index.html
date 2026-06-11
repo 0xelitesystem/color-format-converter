@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Format Converter</title>
+<style>
+:root {
+  --bg: #fafaf6;
+  --surface: #ffffff;
+  --ink: #0a1d1e;
+  --ink-soft: #2c4a4c;
+  --rule: #c8d4d3;
+  --teal: #0f5c60;
+  --teal-deep: #0a4548;
+  --gold: #b07d2a;
+  --gold-deep: #8a611f;
+  --ok: #1a5c2e;
+  --warn: #8a5a00;
+  --err: #8b1a1a;
+  --code-bg: #f0ebe1;
+}
+[data-theme="dark"] {
+  --bg: #0c1c1d;
+  --surface: #14292a;
+  --ink: #e8ebe6;
+  --ink-soft: #b0c0bd;
+  --rule: #2a4042;
+  --teal: #4ab4ba;
+  --teal-deep: #6dc8ce;
+  --gold: #d4a155;
+  --gold-deep: #e6b876;
+  --ok: #6dd380;
+  --warn: #d4a155;
+  --err: #e88080;
+  --code-bg: #0a1718;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--teal);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.01em; color: var(--teal); }
+.tag {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.75rem;
+  color: var(--gold-deep);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="dark"] .tag { color: var(--gold); }
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.theme-btn:hover { border-color: var(--teal); color: var(--teal); }
+.lede { font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 1.75rem; max-width: 60ch; }
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+.section {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 1.25rem;
+  border-radius: 3px;
+}
+.section-title { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 0.85rem; }
+label {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-soft); display: block; margin-bottom: 0.5rem;
+}
+.swatch {
+  width: 100%;
+  height: 180px;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+  margin-bottom: 1rem;
+}
+input[type="color"] {
+  width: 100%; height: 44px; border: 1px solid var(--rule);
+  background: var(--code-bg); border-radius: 2px; cursor: pointer; padding: 2px;
+}
+.field { margin-bottom: 1rem; }
+.field:last-child { margin-bottom: 0; }
+.input-row { display: flex; gap: 0.5rem; }
+input[type="text"] {
+  flex: 1; min-width: 0; background: var(--code-bg); border: 1px solid var(--rule);
+  color: var(--ink); padding: 0.7rem 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9rem; border-radius: 2px;
+}
+input[type="text"]:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+input.invalid { border-color: var(--err); }
+button.copy {
+  font-family: inherit; font-size: 0.8rem; padding: 0 0.85rem;
+  border: 1px solid var(--rule); background: var(--surface); color: var(--ink);
+  cursor: pointer; border-radius: 2px; white-space: nowrap;
+}
+button.copy:hover { border-color: var(--teal); color: var(--teal); }
+button.copy.done { border-color: var(--ok); color: var(--ok); }
+.hint { font-size: 0.72rem; color: var(--ink-soft); margin-top: 0.35rem; font-style: italic; }
+.privacy-note { font-size: 0.78rem; color: var(--gold-deep); margin-top: 1rem; }
+[data-theme="dark"] .privacy-note { color: var(--gold); }
+footer {
+  margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule);
+  font-size: 0.78rem; color: var(--ink-soft);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.85rem;
+}
+footer a { color: var(--teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 760px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.4rem; }
+  .layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Color Format Converter</h1>
+    <div class="tag">HEX, RGB, HSL, HSV in your browser</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</header>
+
+<p class="lede">Paste a color in any format and get all the others. Edit any field and the rest follow, with a live swatch. Copy buttons on every row. Nothing leaves this page.</p>
+
+<div class="layout">
+  <div class="section">
+    <div class="section-title">Preview</div>
+    <div class="swatch" id="swatch"></div>
+    <label for="picker">Pick a color</label>
+    <input type="color" id="picker" value="#0f5c60">
+    <div class="privacy-note">All conversion runs locally. No network calls.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Formats</div>
+
+    <div class="field">
+      <label for="hex">HEX</label>
+      <div class="input-row">
+        <input type="text" id="hex" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="#0f5c60">
+        <button class="copy" type="button" data-for="hex">Copy</button>
+      </div>
+      <div class="hint">Accepts #rgb, #rrggbb, with or without the hash.</div>
+    </div>
+
+    <div class="field">
+      <label for="rgb">RGB</label>
+      <div class="input-row">
+        <input type="text" id="rgb" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="rgb(15, 92, 96)">
+        <button class="copy" type="button" data-for="rgb">Copy</button>
+      </div>
+      <div class="hint">Accepts rgb(15, 92, 96) or 15, 92, 96. Each channel 0 to 255.</div>
+    </div>
+
+    <div class="field">
+      <label for="hsl">HSL</label>
+      <div class="input-row">
+        <input type="text" id="hsl" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="hsl(182, 73%, 22%)">
+        <button class="copy" type="button" data-for="hsl">Copy</button>
+      </div>
+      <div class="hint">Hue 0 to 360, saturation and lightness 0 to 100 percent.</div>
+    </div>
+
+    <div class="field">
+      <label for="hsv">HSV</label>
+      <div class="input-row">
+        <input type="text" id="hsv" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="hsv(182, 84%, 38%)">
+        <button class="copy" type="button" data-for="hsv">Copy</button>
+      </div>
+      <div class="hint">Also called HSB. Hue 0 to 360, saturation and value 0 to 100 percent.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>Color Format Converter. Open source, MIT licensed. <a href="https://github.com/0xelitesystem/color-format-converter" target="_blank" rel="noopener">View source</a>.</div>
+  <div>For design and front-end work.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+// ---- Conversion helpers. All work in RGB 0 to 255 as the hub. ----
+function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+
+function rgbToHex(r, g, b) {
+  const h = (n) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, "0");
+  return "#" + h(r) + h(g) + h(b);
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const l = (max + min) / 2;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  return [h, s * 100, l * 100];
+}
+
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  s = clamp(s, 0, 100) / 100;
+  l = clamp(l, 0, 100) / 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+
+function rgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const s = max === 0 ? 0 : d / max;
+  return [h, s * 100, max * 100];
+}
+
+function hsvToRgb(h, s, v) {
+  h = ((h % 360) + 360) % 360;
+  s = clamp(s, 0, 100) / 100;
+  v = clamp(v, 0, 100) / 100;
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+
+// ---- Parsers. Return [r,g,b] 0 to 255, or null on failure. ----
+function parseHex(str) {
+  let s = str.trim().replace(/^#/, "");
+  if (/^[0-9a-fA-F]{3}$/.test(s)) {
+    s = s.split("").map((c) => c + c).join("");
+  }
+  if (!/^[0-9a-fA-F]{6}$/.test(s)) return null;
+  return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
+}
+
+function parseTriple(str) {
+  const nums = str.trim().replace(/^[a-zA-Z]+/, "").replace(/[()%]/g, " ")
+    .split(/[\s,]+/).filter((x) => x !== "").map(Number);
+  if (nums.length < 3 || nums.some((n) => isNaN(n))) return null;
+  return nums.slice(0, 3);
+}
+
+function parseRgb(str) {
+  const t = parseTriple(str);
+  if (!t) return null;
+  if (t.some((n) => n < 0 || n > 255)) return null;
+  return [t[0], t[1], t[2]];
+}
+
+function parseHsl(str) {
+  const t = parseTriple(str);
+  if (!t) return null;
+  return hslToRgb(t[0], t[1], t[2]);
+}
+
+function parseHsv(str) {
+  const t = parseTriple(str);
+  if (!t) return null;
+  return hsvToRgb(t[0], t[1], t[2]);
+}
+
+// ---- Render all fields from a canonical RGB ----
+let updating = false;
+
+function render(rgb, skipId) {
+  updating = true;
+  const [r, g, b] = rgb;
+  const hex = rgbToHex(r, g, b);
+  const [hh, hs, hl] = rgbToHsl(r, g, b);
+  const [vh, vs, vv] = rgbToHsv(r, g, b);
+
+  const vals = {
+    hex: hex,
+    rgb: `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`,
+    hsl: `hsl(${Math.round(hh)}, ${Math.round(hs)}%, ${Math.round(hl)}%)`,
+    hsv: `hsv(${Math.round(vh)}, ${Math.round(vs)}%, ${Math.round(vv)}%)`,
+  };
+  for (const id of ["hex", "rgb", "hsl", "hsv"]) {
+    if (id !== skipId) $(id).value = vals[id];
+    $(id).classList.remove("invalid");
+  }
+  $("swatch").style.background = hex;
+  $("picker").value = hex;
+  updating = false;
+}
+
+const PARSERS = { hex: parseHex, rgb: parseRgb, hsl: parseHsl, hsv: parseHsv };
+
+function onFieldInput(id) {
+  if (updating) return;
+  const rgb = PARSERS[id]($(id).value);
+  if (!rgb) {
+    $(id).classList.add("invalid");
+    return;
+  }
+  $(id).classList.remove("invalid");
+  render(rgb, id);
+}
+
+for (const id of ["hex", "rgb", "hsl", "hsv"]) {
+  $(id).addEventListener("input", () => onFieldInput(id));
+}
+
+$("picker").addEventListener("input", () => {
+  const rgb = parseHex($("picker").value);
+  if (rgb) render(rgb);
+});
+
+// Copy buttons
+document.querySelectorAll("button.copy").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const id = btn.getAttribute("data-for");
+    const text = $(id).value;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      // Fallback for older browsers or non-secure contexts
+      const el = $(id);
+      el.select();
+      try { document.execCommand("copy"); } catch (_) {}
+    }
+    const orig = btn.textContent;
+    btn.textContent = "Copied";
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove("done"); }, 1100);
+  });
+});
+
+const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+setTheme(prefersDark ? "dark" : "light");
+render(parseHex("#0f5c60"));
+</script>
+</body>
+</html>
